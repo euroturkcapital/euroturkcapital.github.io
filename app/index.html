@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>EuroTurk Capital | املاک یونان</title>
-<meta name="description" content="پروژه‌های نوساز آتن، ریویرای آتن و تسالونیکی با مشاوره خرید و گلدن ویزای یونان">
+<meta name="description" content="بیش از ۱۰۰ پروژه و ملک در آتن، ریویرای آتن، تسالونیکی و جزایر یونان با مشاوره خرید و گلدن ویزا">
 <meta name="theme-color" content="#0b0d11">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -190,6 +190,17 @@ table{font-size:12.5px}th,td{padding:9px 7px!important}td:nth-child(2){white-spa
 .sheet .btn{width:100%}
 .skel{height:280px;border-radius:22px;background:linear-gradient(90deg,rgba(255,255,255,.04),rgba(255,255,255,.09),rgba(255,255,255,.04));background-size:200% 100%;animation:sk 1.4s infinite}
 @keyframes sk{to{background-position:-200% 0}}
+
+.search{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0 12px;margin:0 0 12px}
+.search input{flex:1;background:none;border:0;outline:0;color:inherit;font:inherit;font-size:14px;padding:12px 0;min-width:0}
+.search input::placeholder{color:var(--muted);font-size:12.5px}
+.cimg.ph{background:radial-gradient(120% 90% at 50% 0%,#2a2416 0%,#0d0d0d 70%);display:flex;align-items:center;justify-content:center}
+.cimg.ph::after{display:none}
+.phx{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:16px;color:var(--gold)}
+.phx span{font-size:30px;filter:grayscale(.2)}
+.phx b{font-size:15px}
+.phx small{color:var(--muted);font-size:11.5px}
+.dph{aspect-ratio:16/9;border-radius:0}
 </style>
 
 </head>
@@ -209,10 +220,11 @@ table{font-size:12.5px}th,td{padding:9px 7px!important}td:nth-child(2){white-spa
   <div class="hero wrap">
     <div class="eyebrow">EUROTURK CAPITAL · GREECE</div>
     <h1><em>املاک یونان</em></h1>
-    <p>پروژه‌های نوساز در آتن، ریویرای آتن و تسالونیکی، همراه با مشاوره خرید و گلدن ویزای یونان</p>
+    <p>بیش از ۱۰۰ پروژه و ملک در آتن، ریویرای آتن، تسالونیکی و جزایر یونان، همراه با مشاوره خرید و گلدن ویزا</p>
   </div>
   <div class="wrap">
     <div class="filters">
+      <div class="search"><span>🔍</span><input id="q" type="search" placeholder="جستجو: منطقه، نوع ملک یا کد (مثلاً گلیفادا، لافت، GR-045)" autocomplete="off"></div>
       <div class="flabel">منطقه</div>
       <div class="frow" id="fArea"></div>
       <div class="flabel">بودجه</div>
@@ -280,8 +292,8 @@ const saveFavs=()=>{try{localStorage.setItem("etc_favs2",JSON.stringify(favs))}c
 
 /* filters */
 const F={area:"all",budget:"all",bed:"all",gv:"all"};
-const REG=[["all","همه"],["riviera","ریویرای آتن"],["center","مرکز آتن"],["south","جنوب آتن"],["north","شمال آتن"],["piraeus","پیرائوس"],["thess","تسالونیکی"]];
-const BUD=[["all","همه"],["u300","تا ۳۰۰ هزار",0,300000],["300-400","۳۰۰ تا ۴۰۰ هزار",300000,400000],["o400","بالای ۴۰۰ هزار",400000,1e9]];
+const REG=[["all","همه"],["riviera","ریویرای آتن"],["center","مرکز آتن"],["south","جنوب آتن"],["north","شمال آتن"],["piraeus","پیرائوس"],["west","غرب آتن"],["east","شرق آتیکا"],["thess","تسالونیکی"],["other","جزایر و سایر شهرها"]];
+const BUD=[["all","همه"],["u300","تا ۳۰۰ هزار",0,300000],["300-400","۳۰۰ تا ۴۰۰ هزار",300000,400000],["400-800","۴۰۰ تا ۸۰۰ هزار",400000,800000],["o800","بالای ۸۰۰ هزار",800000,1e9]];
 const BED=[["all","همه"],["0","استودیو"],["1","یک‌خوابه"],["2","دوخوابه و بیشتر"]];
 const GVF=[["all","همه"],["250","مسیر ۲۵۰ هزار"],["800","مسیر ۸۰۰ هزار"]];
 function chips(el,arr,key,state,cb){el.innerHTML=arr.map(a=>`<button class="chip${state[key]===a[0]?" on":""}" data-v="${a[0]}">${a[1]}</button>`).join("");
@@ -289,7 +301,11 @@ function chips(el,arr,key,state,cb){el.innerHTML=arr.map(a=>`<button class="chip
 const unitsShown=p=>p.units;
 function priced(p,lo,hi){return p.units.some(u=>u.price&&u.price>=lo&&u.price<=hi)||(!p.units.some(u=>u.price)&&false)}
 function hasBed(p,b){if(b==="2")return p.beds.some(x=>x>=2);return p.beds.includes(+b)}
+let Q="",SHOWN=24;
+const norm=s=>String(s||"").toLowerCase().replace(/[ي]/g,"ی").replace(/[ك]/g,"ک").replace(/[\u200c\s]+/g," ").trim();
+function hay(p){return p._h||(p._h=norm([p.code,p.name,p.areaFa,p.city,p.delivery,p.gv.label,p.units.map(u=>u.type).join(" ")].join(" ")))}
 function match(p){
+ if(Q&&!Q.split(" ").every(w=>hay(p).includes(w)))return false;
  if(F.area!=="all"&&p.region!==F.area)return false;
  if(F.gv==="250"&&p.gv.min!==250000)return false;
  if(F.gv==="800"&&p.gv.min!==800000)return false;
@@ -298,9 +314,10 @@ function match(p){
  return true}
 function gvTag(p){const c=p.gv.tier==="ok"?"":p.gv.tier==="claim"?" pend":" verify";return `<span class="tag gv${c}">🇬🇷 ${esc(p.gv.label)}</span>`}
 function priceLine(p){if(!p.min)return `<div class="cprice">قیمت: استعلام</div>`;return `<div class="cprice">از ${eur(p.min)} <span>${p.max&&p.max!==p.min?"تا "+eur(p.max):""}</span></div>`}
+const PH=`<div class="phx"><span>🏛️</span><b>تصاویر به‌زودی</b><small>برای دریافت عکس و بروشور پیام دهید</small></div>`;
 function card(p){const on=favs.includes(p.code);
  return `<article class="card">
-  <a href="#${p.code}" class="cimg"><img src="${p.img[0]}" alt="${esc(p.name)}" loading="lazy"><span class="badge">📷 ${fa(p.img.length)} عکس</span></a>
+  <a href="#${p.code}" class="cimg${p.img.length?"":" ph"}">${p.img.length?`<img src="${p.img[0]}" alt="${esc(p.name)}" loading="lazy"><span class="badge">📷 ${fa(p.img.length)} عکس</span>`:PH}</a>
   <button class="fav" data-fav="${p.code}" aria-label="ذخیره">${on?"♥":"♡"}</button>
   <a href="#${p.code}" class="cbody" style="display:block">
    <h2 class="ctitle">${esc(p.name)}</h2>
@@ -311,9 +328,10 @@ function card(p){const on=favs.includes(p.code);
   </a></article>`}
 function bindFav(root){root.querySelectorAll("[data-fav]").forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();const id=b.dataset.fav;
  favs=favs.includes(id)?favs.filter(x=>x!==id):[...favs,id];saveFavs();renderAll()})}
-function render(){const L=P.filter(match);document.getElementById("count").textContent=fa(L.length)+" پروژه";
+function render(keep){if(!keep)SHOWN=24;const L=P.filter(match);document.getElementById("count").textContent=fa(L.length)+" پروژه";
  const el=document.getElementById("list");
- el.innerHTML=L.length?L.map(card).join(""):`<div class="empty">پروژه‌ای با این فیلترها نیست.<br>فیلترها را تغییر دهید یا از بخش «پیشنهاد ملک» درخواست بدهید.</div>`;bindFav(el)}
+ el.innerHTML=L.length?L.slice(0,SHOWN).map(card).join("")+(L.length>SHOWN?`<button class="more" id="moreP">نمایش پروژه‌های بیشتر (${fa(L.length-SHOWN)} پروژهٔ دیگر)</button>`:""):`<div class="empty">پروژه‌ای با این فیلترها نیست.<br>فیلترها را تغییر دهید یا از بخش «پیشنهاد ملک» درخواست بدهید.</div>`;bindFav(el);
+ const mp=document.getElementById("moreP");if(mp)mp.onclick=()=>{SHOWN+=24;render(true)}}
 function renderFavs(){const L=P.filter(p=>favs.includes(p.code)),el=document.getElementById("favList");
  const d=document.getElementById("favDot");d.style.display=favs.length?"inline-block":"none";d.textContent=fa(favs.length);
  if(!L.length){el.innerHTML=`<div class="empty">هنوز ملکی ذخیره نکرده‌اید.<br>روی ♡ کنار هر ملک بزنید.</div>`;return}
@@ -333,8 +351,9 @@ function detail(p){const on=favs.includes(p.code);
  const el=document.getElementById("pg-detail");
  el.innerHTML=`<div class="wrap">
   <div class="back"><button onclick="history.length>1?history.back():location.hash=''">→ بازگشت به املاک</button><button class="fav" style="position:static" data-fav="${p.code}">${on?"♥":"♡"}</button></div>
-  <div class="gal" id="gal">${p.img.map((s,i)=>`<figure data-i="${i}"><img src="${s}" alt="${esc(p.photos[i]||"")}" ${i>1?'loading="lazy"':""}><figcaption>${esc(p.photos[i]||"")} · ${fa(i+1)}/${fa(p.img.length)}</figcaption></figure>`).join("")}</div>
-  <div class="thumbs" id="thumbs">${p.img.map((s,i)=>`<img src="${s}" data-i="${i}" loading="lazy" class="${i?"":"on"}" alt="">`).join("")}</div>
+  ${p.img.length?"":`<div class="cimg ph dph">${PH}</div>`}
+  <div class="gal" id="gal"${p.img.length?"":" hidden"}>${p.img.map((s,i)=>`<figure data-i="${i}"><img src="${s}" alt="${esc(p.photos[i]||"")}" ${i>1?'loading="lazy"':""}><figcaption>${esc(p.photos[i]||"")} · ${fa(i+1)}/${fa(p.img.length)}</figcaption></figure>`).join("")}</div>
+  <div class="thumbs" id="thumbs"${p.img.length>1?"":" hidden"}>${p.img.map((s,i)=>`<img src="${s}" data-i="${i}" loading="lazy" class="${i?"":"on"}" alt="">`).join("")}</div>
   <div class="dsec">
    <h1 class="dtitle">${esc(p.name)}</h1>
    <div class="darea">📍 ${esc(p.areaFa)}</div><span class="code">کد ملک: ${p.code}</span>
@@ -381,7 +400,7 @@ function renderMatch(){
  const R=P.filter(p=>p.units.some(u=>u.price&&u.price<=M.budget&&u.st!=="rs"&&(M.bed==="any"||(M.bed==="2"?(u.beds||0)>=2:u.beds===+M.bed)))&&p.goals.includes(M.goal)&&(M.goal!=="gv"||p.gv.min&&p.gv.min<=M.budget));
  const box=document.getElementById("matchRes");
  box.innerHTML=`<b>${R.length?"✦ "+fa(R.length)+" پروژهٔ مناسب شما":"ملک دقیقاً مطابق پیدا نشد؛ مشاور گزینه‌های دیگر را پیشنهاد می‌دهد."}</b>`+
-  R.map(p=>`<a class="mitem" href="#${p.code}"><img src="${p.img[0]}" alt=""><div><b>${esc(p.name)}</b><br><small>${esc(p.areaFa)} · از ${eur(p.min)}</small></div></a>`).join("");
+  R.map(p=>`<a class="mitem" href="#${p.code}"><img src="${p.img[0]||"../bg/1.jpg"}" alt=""><div><b>${esc(p.name)}</b><br><small>${esc(p.areaFa)} · از ${eur(p.min)}</small></div></a>`).join("");
  const t=(arr,v)=>arr.find(a=>String(a[0])===String(v))[1];
  const name=document.getElementById("mName").value.trim(),note=document.getElementById("mNote").value.trim();
  const msg=`سلام، درخواست مشاوره ملک یونان:\n`+(name?`👤 نام: ${name}\n`:"")+`💶 بودجه: تا ${t(MB,M.budget)} یورو\n🎯 هدف: ${t(MG,M.goal)}\n🛏 خواب: ${t(MBD,M.bed)}\n⏱ زمان خرید: ${t(MT,M.time)}\n`+(R.length?`🏠 پیشنهادهای اپ: ${R.map(p=>p.code).join("، ")}\n`:"")+(note?`📝 ${note}`:"");
@@ -417,6 +436,7 @@ document.getElementById("hdrWa").href=waLink("سلام، از اپ EuroTurk Capi
 fetch("data.json",{cache:"no-cache"}).then(r=>r.json()).then(d=>{P=d.projects;
  chips(document.getElementById("fArea"),REG.filter(r=>r[0]==="all"||P.some(p=>p.region===r[0])),"area",F,render);
  chips(document.getElementById("fBudget"),BUD,"budget",F,render);
+document.getElementById("q").addEventListener("input",e=>{Q=norm(e.target.value);render()});
  chips(document.getElementById("fBed"),BED,"bed",F,render);
  chips(document.getElementById("fGv"),GVF,"gv",F,render);
  opt("mBudget",MB,"budget");opt("mGoal",MG,"goal");opt("mBed",MBD,"bed");opt("mTime",MT,"time");
