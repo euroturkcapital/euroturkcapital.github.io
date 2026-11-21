@@ -194,6 +194,11 @@ table{font-size:12.5px}th,td{padding:9px 7px!important}td:nth-child(2){white-spa
 .search{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:0 12px;margin:0 0 12px}
 .search input{flex:1;background:none;border:0;outline:0;color:inherit;font:inherit;font-size:14px;padding:12px 0;min-width:0}
 .search input::placeholder{color:var(--muted);font-size:12.5px}
+.qbtn{background:none;border:0;font-size:18px;padding:8px 2px;cursor:pointer;color:inherit}
+.qres{margin:-4px 0 12px;font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.qres[hidden]{display:none}.qres b{color:var(--gold)}
+.qres button{background:none;border:1px solid var(--line);color:var(--gold);border-radius:10px;padding:3px 9px;font:inherit;font-size:12px}
+.search input::-webkit-search-cancel-button{filter:invert(1)}
 .cimg.ph{background:radial-gradient(120% 90% at 50% 0%,#2a2416 0%,#0d0d0d 70%);display:flex;align-items:center;justify-content:center}
 .cimg.ph::after{display:none}
 .phx{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:16px;color:var(--gold)}
@@ -224,7 +229,7 @@ table{font-size:12.5px}th,td{padding:9px 7px!important}td:nth-child(2){white-spa
   </div>
   <div class="wrap">
     <div class="filters">
-      <div class="search"><span>🔍</span><input id="q" type="search" placeholder="جستجو: منطقه، نوع ملک یا کد (مثلاً گلیفادا، لافت، GR-045)" autocomplete="off"></div>
+      <form class="search" id="qf" role="search" action="#" onsubmit="return false"><button type="submit" class="qbtn" aria-label="جستجو">🔍</button><input id="q" type="search" enterkeyhint="search" placeholder="جستجو: منطقه، نوع ملک یا کد (مثلاً گلیفادا، لافت، GR-045)" autocomplete="off"></form><div class="qres" id="qres" hidden></div>
       <div class="flabel">منطقه</div>
       <div class="frow" id="fArea"></div>
       <div class="flabel">بودجه</div>
@@ -302,8 +307,8 @@ const unitsShown=p=>p.units;
 function priced(p,lo,hi){return p.units.some(u=>u.price&&u.price>=lo&&u.price<=hi)||(!p.units.some(u=>u.price)&&false)}
 function hasBed(p,b){if(b==="2")return p.beds.some(x=>x>=2);return p.beds.includes(+b)}
 let Q="",SHOWN=24;
-const norm=s=>String(s||"").toLowerCase().replace(/[ي]/g,"ی").replace(/[ك]/g,"ک").replace(/[\u200c\s]+/g," ").trim();
-function hay(p){return p._h||(p._h=norm([p.code,p.name,p.areaFa,p.city,p.delivery,p.gv.label,p.units.map(u=>u.type).join(" ")].join(" ")))}
+const norm=s=>String(s||"").toLowerCase().replace(/[ي]/g,"ی").replace(/[ك]/g,"ک").replace(/[ۀة]/g,"ه").replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[\u200c\s\-–]+/g," ").trim();
+function hay(p){return p._h||(p._h=norm([p.code,p.code.replace("GR-",""),p.name,p.areaFa,p.city,p.en||"",p.delivery,p.gv.label,p.units.map(u=>u.type).join(" ")].join(" ")))}
 function match(p){
  if(Q&&!Q.split(" ").every(w=>hay(p).includes(w)))return false;
  if(F.area!=="all"&&p.region!==F.area)return false;
@@ -436,7 +441,14 @@ document.getElementById("hdrWa").href=waLink("سلام، از اپ EuroTurk Capi
 fetch("data.json",{cache:"no-cache"}).then(r=>r.json()).then(d=>{P=d.projects;
  chips(document.getElementById("fArea"),REG.filter(r=>r[0]==="all"||P.some(p=>p.region===r[0])),"area",F,render);
  chips(document.getElementById("fBudget"),BUD,"budget",F,render);
-document.getElementById("q").addEventListener("input",e=>{Q=norm(e.target.value);render()});
+(()=>{const q=document.getElementById("q"),qr=document.getElementById("qres");let t;
+ const upd=()=>{Q=norm(q.value);render();const n=P.filter(match).length;
+  qr.hidden=!Q;qr.innerHTML=Q?`نتیجهٔ جستجو برای «${esc(q.value.trim())}»: <b>${fa(n)} پروژه</b> <button type="button" id="qclr">پاک کردن ✕</button>`:"";
+  const c=document.getElementById("qclr");if(c)c.onclick=()=>{q.value="";upd()}};
+ q.addEventListener("input",()=>{clearTimeout(t);t=setTimeout(upd,200)});
+ q.addEventListener("search",upd);
+ document.getElementById("qf").addEventListener("submit",e=>{e.preventDefault();upd();q.blur();
+  const el=document.getElementById("count");window.scrollTo({top:el.getBoundingClientRect().top+scrollY-80,behavior:"smooth"})});})();
  chips(document.getElementById("fBed"),BED,"bed",F,render);
  chips(document.getElementById("fGv"),GVF,"gv",F,render);
  opt("mBudget",MB,"budget");opt("mGoal",MG,"goal");opt("mBed",MBD,"bed");opt("mTime",MT,"time");
