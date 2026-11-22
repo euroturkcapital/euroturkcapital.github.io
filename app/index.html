@@ -236,6 +236,8 @@ table{font-size:12.5px}th,td{padding:9px 7px!important}td:nth-child(2){white-spa
       <div class="frow" id="fBudget"></div>
       <div class="flabel">تعداد خواب</div>
       <div class="frow" id="fBed"></div>
+      <div class="flabel">وضعیت ساخت</div>
+      <div class="frow" id="fStage"></div>
       <div class="flabel">گلدن ویزا</div>
       <div class="frow" id="fGv"></div>
     </div>
@@ -296,10 +298,11 @@ let favs=[];try{favs=JSON.parse(localStorage.getItem("etc_favs2")||"[]")}catch(e
 const saveFavs=()=>{try{localStorage.setItem("etc_favs2",JSON.stringify(favs))}catch(e){}};
 
 /* filters */
-const F={area:"all",budget:"all",bed:"all",gv:"all"};
+const F={area:"all",budget:"all",bed:"all",gv:"all",stage:"all"};
 const REG=[["all","همه"],["riviera","ریویرای آتن"],["center","مرکز آتن"],["south","جنوب آتن"],["north","شمال آتن"],["piraeus","پیرائوس"],["west","غرب آتن"],["east","شرق آتیکا"],["thess","تسالونیکی"],["other","جزایر و سایر شهرها"]];
 const BUD=[["all","همه"],["u300","تا ۳۰۰ هزار",0,300000],["300-400","۳۰۰ تا ۴۰۰ هزار",300000,400000],["400-800","۴۰۰ تا ۸۰۰ هزار",400000,800000],["o800","بالای ۸۰۰ هزار",800000,1e9]];
 const BED=[["all","همه"],["0","استودیو"],["1","یک‌خوابه"],["2","دوخوابه و بیشتر"]];
+const STG=[["all","همه"],["ready","آماده تحویل"],["build","در حال ساخت"]];
 const GVF=[["all","همه"],["250","مسیر ۲۵۰ هزار"],["800","مسیر ۸۰۰ هزار"]];
 function chips(el,arr,key,state,cb){el.innerHTML=arr.map(a=>`<button class="chip${state[key]===a[0]?" on":""}" data-v="${a[0]}">${a[1]}</button>`).join("");
  el.onclick=e=>{const b=e.target.closest(".chip");if(!b)return;state[key]=b.dataset.v;chips(el,arr,key,state,cb);cb()}}
@@ -308,10 +311,11 @@ function priced(p,lo,hi){return p.units.some(u=>u.price&&u.price>=lo&&u.price<=h
 function hasBed(p,b){if(b==="2")return p.beds.some(x=>x>=2);return p.beds.includes(+b)}
 let Q="",SHOWN=24;
 const norm=s=>String(s||"").toLowerCase().replace(/[ي]/g,"ی").replace(/[ك]/g,"ک").replace(/[ۀة]/g,"ه").replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[\u200c\s\-–]+/g," ").trim();
-function hay(p){return p._h||(p._h=norm([p.code,p.code.replace("GR-",""),p.name,p.areaFa,p.city,p.en||"",p.delivery,p.gv.label,p.units.map(u=>u.type).join(" ")].join(" ")))}
+function hay(p){return p._h||(p._h=norm([p.code,p.code.replace("GR-",""),p.name,p.areaFa,p.city,p.en||"",p.delivery,p.stage==="ready"?"آماده تحویل":p.stage==="build"?"در حال ساخت":"",p.gv.label,p.units.map(u=>u.type).join(" ")].join(" ")))}
 function match(p){
  if(Q&&!Q.split(" ").every(w=>hay(p).includes(w)))return false;
  if(F.area!=="all"&&p.region!==F.area)return false;
+ if(F.stage!=="all"&&p.stage!==F.stage)return false;
  if(F.gv==="250"&&p.gv.min!==250000)return false;
  if(F.gv==="800"&&p.gv.min!==800000)return false;
  if(F.budget!=="all"){const b=BUD.find(x=>x[0]===F.budget);if(!priced(p,b[2],b[3]))return false}
@@ -329,7 +333,7 @@ function card(p){const on=favs.includes(p.code);
    <div class="carea">📍 ${esc(p.areaFa)} · <span style="direction:ltr;display:inline-block">${p.code}</span></div>
    ${priceLine(p)}
    ${p.nAv?`<div class="avail">● ${fa(p.nAv)} واحد موجود</div>`:""}
-   <div class="tags">${gvTag(p)}<span class="tag">📅 تحویل ${esc(p.delivery)}</span></div>
+   <div class="tags">${gvTag(p)}${p.stage==="ready"?`<span class="tag">🔑 آماده تحویل</span>`:p.stage==="build"?`<span class="tag">🏗️ در حال ساخت · تحویل ${esc(p.delivery)}</span>`:`<span class="tag">📅 تحویل ${esc(p.delivery)}</span>`}</div>
   </a></article>`}
 function bindFav(root){root.querySelectorAll("[data-fav]").forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();const id=b.dataset.fav;
  favs=favs.includes(id)?favs.filter(x=>x!==id):[...favs,id];saveFavs();renderAll()})}
@@ -450,6 +454,7 @@ fetch("data.json",{cache:"no-cache"}).then(r=>r.json()).then(d=>{P=d.projects;
  document.getElementById("qf").addEventListener("submit",e=>{e.preventDefault();upd();q.blur();
   const el=document.getElementById("count");window.scrollTo({top:el.getBoundingClientRect().top+scrollY-80,behavior:"smooth"})});})();
  chips(document.getElementById("fBed"),BED,"bed",F,render);
+ chips(document.getElementById("fStage"),STG,"stage",F,render);
  chips(document.getElementById("fGv"),GVF,"gv",F,render);
  opt("mBudget",MB,"budget");opt("mGoal",MG,"goal");opt("mBed",MBD,"bed");opt("mTime",MT,"time");
  render();renderFavs();renderMatch();route()})
