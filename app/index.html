@@ -196,6 +196,8 @@ table{font-size:12.5px}th,td{padding:9px 7px!important}td:nth-child(2){white-spa
 .search input::placeholder{color:var(--muted);font-size:12.5px}
 .uc{color:var(--gold);font-weight:700;white-space:nowrap;text-decoration:none;font-size:12px;direction:ltr;display:inline-block}
 tr.hl td{background:rgba(201,168,76,.2)}
+.vids{padding:14px 16px 0}.vids h3{margin:0 0 8px;font-size:15px;color:var(--gold)}
+.vids video{display:block;width:100%;max-height:70vh;background:#000;border-radius:14px;margin:0 0 10px}
 .uhint{font-size:11.5px;color:var(--muted);margin:0 0 6px}
 .qbtn{background:none;border:0;font-size:18px;padding:8px 2px;cursor:pointer;color:inherit}
 .qres{margin:-4px 0 12px;font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;align-items:center;gap:6px}
@@ -314,7 +316,7 @@ function priced(p,lo,hi){return p.units.some(u=>u.price&&u.price>=lo&&u.price<=h
 function hasBed(p,b){if(b==="2")return p.beds.some(x=>x>=2);return p.beds.includes(+b)}
 let Q="",SHOWN=24;
 const norm=s=>String(s||"").toLowerCase().replace(/[ي]/g,"ی").replace(/[ك]/g,"ک").replace(/[ۀة]/g,"ه").replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[\u200c\s\-–]+/g," ").trim();
-function hay(p){return p._h||(p._h=norm([p.code,p.code.replace("GR-",""),p.name,p.areaFa,p.city,p.en||"",p.delivery,p.stage==="ready"?"آماده تحویل":p.stage==="build"?"در حال ساخت":"",p.gv.label,p.units.map(u=>u.type+" "+(u.uc||"")).join(" ")].join(" ")))}
+function hay(p){return p._h||(p._h=norm([p.code,p.code.replace("GR-",""),p.name,p.areaFa,p.city,p.en||"",p.delivery,p.stage==="ready"?"آماده تحویل":p.stage==="build"?"در حال ساخت":"",p.gv.label,(p.vid&&p.vid.length?"ویدئو فیلم ":"")+p.units.map(u=>u.type+" "+(u.uc||"")).join(" ")].join(" ")))}
 function match(p){
  if(Q&&!Q.split(" ").every(w=>hay(p).includes(w)))return false;
  if(F.area!=="all"&&p.region!==F.area)return false;
@@ -329,7 +331,7 @@ function priceLine(p){if(!p.min)return `<div class="cprice">قیمت: استعل
 const PH=`<div class="phx"><span>🏛️</span><b>تصاویر به‌زودی</b><small>برای دریافت عکس و بروشور پیام دهید</small></div>`;
 function card(p){const on=favs.includes(p.code);
  return `<article class="card">
-  <a href="#${p.code}" class="cimg${p.img.length?"":" ph"}">${p.img.length?`<img src="${p.img[0]}" alt="${esc(p.name)}" loading="lazy"><span class="badge">📷 ${fa(p.img.length)} عکس</span>`:PH}</a>
+  <a href="#${p.code}" class="cimg${p.img.length?"":" ph"}">${p.img.length?`<img src="${p.img[0]}" alt="${esc(p.name)}" loading="lazy"><span class="badge">📷 ${fa(p.img.length)} عکس${p.vid&&p.vid.length?" · 🎥 ویدئو":""}</span>`:PH}</a>
   <button class="fav" data-fav="${p.code}" aria-label="ذخیره">${on?"♥":"♡"}</button>
   <a href="#${p.code}" class="cbody" style="display:block">
    <h2 class="ctitle">${esc(p.name)}</h2>
@@ -366,6 +368,7 @@ function detail(p){const on=favs.includes(p.code);
   ${p.img.length?"":`<div class="cimg ph dph">${PH}</div>`}
   <div class="gal" id="gal"${p.img.length?"":" hidden"}>${p.img.map((s,i)=>`<figure data-i="${i}"><img src="${s}" alt="${esc(p.photos[i]||"")}" ${i>1?'loading="lazy"':""}><figcaption>${esc(p.photos[i]||"")} · ${fa(i+1)}/${fa(p.img.length)}</figcaption></figure>`).join("")}</div>
   <div class="thumbs" id="thumbs"${p.img.length>1?"":" hidden"}>${p.img.map((s,i)=>`<img src="${s}" data-i="${i}" loading="lazy" class="${i?"":"on"}" alt="">`).join("")}</div>
+  ${p.vid&&p.vid.length?`<div class="vids"><h3>🎥 ویدئوی ملک${p.vid.length>1?` (${fa(p.vid.length)} ویدئو)`:""}</h3>${p.vid.map(v=>`<video controls playsinline preload="none" poster="${v.poster}" src="${v.src}"></video>`).join("")}</div>`:""}
   <div class="dsec">
    <h1 class="dtitle">${esc(p.name)}</h1>
    <div class="darea">📍 ${esc(p.areaFa)}</div><span class="code">کد ملک: ${p.code}</span>
